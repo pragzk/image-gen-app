@@ -196,15 +196,47 @@ def load_css(theme):
       padding: 0.35rem 0.5rem;
     }}
 
-    textarea, input, .stTextInput input, [data-baseweb="textarea"], [data-baseweb="input"], [data-baseweb="select"] {{
+    textarea, input, .stTextInput input, [data-baseweb="textarea"], [data-baseweb="input"] {{
       background: var(--input-bg) !important;
       color: var(--text) !important;
       border-radius: var(--radius-input) !important;
       border: 1px solid var(--panel-border) !important;
     }}
 
+    [data-baseweb="select"] > div {{
+      background-color: var(--input-bg) !important;
+      color: var(--text) !important;
+      border-color: var(--panel-border) !important;
+    }}
+
     [data-baseweb="select"] span, [data-baseweb="select"] div {{
       color: var(--text) !important;
+    }}
+
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div,
+    div[data-baseweb="popover"] > div > div,
+    div[data-baseweb="popover"] ul,
+    div[data-baseweb="popover"] li,
+    [role="listbox"],
+    [role="listbox"] * {{
+      background-color: var(--input-bg) !important;
+      color: var(--text) !important;
+    }}
+
+    [role="option"]:hover, 
+    [role="option"]:hover *, 
+    [role="option"][aria-selected="true"], 
+    [role="option"][aria-selected="true"] *, 
+    [role="option"][aria-highlighted="true"],
+    [role="option"][aria-highlighted="true"] * {{
+      background-color: var(--accent-soft) !important;
+      color: var(--text) !important;
+    }}
+
+    .stRadio div[role="radiogroup"] label > div:first-child,
+    label[data-baseweb="radio"] > div:first-child {{
+      background-color: transparent !important;
     }}
 
     textarea::placeholder, input::placeholder {{
