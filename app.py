@@ -30,8 +30,6 @@ if "prompt_input" not in st.session_state:
     st.session_state.prompt_input = ""
 if "last_gen_time" not in st.session_state:
     st.session_state.last_gen_time = 0.0
-if "gen_count" not in st.session_state:
-    st.session_state.gen_count = 0
 if "theme" not in st.session_state:
     st.session_state.theme = "Dark"
 
@@ -61,7 +59,6 @@ SIZE_OPTIONS = {
 
 MAX_CHARS = 500
 RATE_LIMIT_SECONDS = 15
-MAX_GENS_PER_SESSION = 50
 MAX_HISTORY = 20
 
 def load_css(theme):
@@ -357,9 +354,8 @@ with st.sidebar:
 
     st.divider()
 
-    gen_c = st.session_state.gen_count
     hist_c = len(st.session_state.history)
-    st.caption(f"Session: {hist_c} images  |  Quota: {gen_c}/{MAX_GENS_PER_SESSION} generations")
+    st.caption(f"Session: {hist_c} images")
 
     st.divider()
 
@@ -436,10 +432,6 @@ with right_col:
             st.warning(f"Please wait {remaining}s before generating again.")
             st.stop()
 
-        if st.session_state.gen_count + num_images > MAX_GENS_PER_SESSION:
-            st.error("Session limit reached. Refresh to start a new session.")
-            st.stop()
-
         prompt = build_prompt(text.strip(), style)
         current_batch_images = []
         st.session_state.last_gen_time = time.time()
@@ -448,7 +440,6 @@ with right_col:
             with st.spinner(f"Creating image {i+1} of {num_images}..."):
                 try:
                     img = generate_image(prompt, width, height, negative_prompt)
-                    st.session_state.gen_count += 1
                     
                     try:
                         record = upload_image(img, text.strip(), style)
