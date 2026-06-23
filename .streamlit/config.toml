@@ -1,8 +1,9 @@
 [theme]
-primaryColor = "#a855f7"           # vibrant violet accent
-backgroundColor = "#0f0f1a"        # deep dark page background
-secondaryBackgroundColor = "#1a1a2e" # sidebar & card panels
-textColor = "#e4e4ed"              # soft off-white text
+base = "dark"
+primaryColor = "#8b5cf6"
+backgroundColor = "#0b1020"
+secondaryBackgroundColor = "#151b2f"
+textColor = "#f4f7fb"
 font = "sans serif"
 
 [server]

@@ -80,147 +80,231 @@ MAX_HISTORY = 20
 #  THEMING & CSS
 # ══════════════════════════════════════════════════════════════════════════════
 
-if st.session_state.theme == "Dark":
-    css_vars = """
-    --bg-main: linear-gradient(160deg, #0a0a14 0%, #0f0f1a 40%, #141428 70%, #0f0f1a 100%);
-    --bg-sidebar: linear-gradient(180deg, #12122a 0%, #0e0e20 100%);
-    --bg-panel: rgba(255, 255, 255, 0.02);
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-highlight: rgba(168, 85, 247, 0.4);
-    --text-primary: #e4e4ed;
-    --text-muted: rgba(228, 228, 237, 0.5);
-    --btn-primary-bg: linear-gradient(135deg, #a855f7, #7c3aed);
-    --btn-primary-shadow: rgba(168, 85, 247, 0.3);
-    --btn-secondary-bg: rgba(255, 255, 255, 0.04);
-    --btn-secondary-border: rgba(255, 255, 255, 0.1);
-    --btn-secondary-hover-bg: rgba(168, 85, 247, 0.1);
-    --hero-gradient: linear-gradient(135deg, #a855f7, #6366f1, #ec4899);
-    """
-else:
-    css_vars = """
-    --bg-main: #f8fafc;
-    --bg-sidebar: #f1f5f9;
-    --bg-panel: #ffffff;
-    --border-color: #cbd5e1;
-    --border-highlight: #6366f1;
-    --text-primary: #0f172a;
-    --text-muted: #64748b;
-    --btn-primary-bg: linear-gradient(135deg, #4f46e5, #3b82f6);
-    --btn-primary-shadow: rgba(79, 70, 229, 0.3);
-    --btn-secondary-bg: #ffffff;
-    --btn-secondary-border: #cbd5e1;
-    --btn-secondary-hover-bg: #e0e7ff;
-    --hero-gradient: linear-gradient(135deg, #4f46e5, #ec4899);
-    """
+def load_css(theme):
+    if theme == "Light":
+        vars = """
+      --bg: #f6f3ee;
+      --surface: rgba(255, 255, 255, 0.78);
+      --surface-2: #ffffff;
+      --panel-border: rgba(0, 0, 0, 0.08);
+      --text: #1b1d24;
+      --text-muted: #5a6376;
+      --text-faint: #64748b;
+      --accent: #8b5cf6;
+      --accent-2: #4f8cff;
+      --accent-soft: rgba(139, 92, 246, 0.12);
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      --radius-card: 24px;
+      --radius-input: 18px;
+      --radius-pill: 999px;
+      --hero-text: #1b1d24;
+      --input-bg: #ffffff;
+      --sidebar-bg: rgba(246, 243, 238, 0.88);
+      --eyebrow-text: #6d28d9;
+      --bg-gradient: linear-gradient(180deg, #f6f3ee 0%, #fdfcfb 100%);
+        """
+    else:
+        vars = """
+      --bg: #0b1020;
+      --surface: rgba(19, 24, 39, 0.78);
+      --surface-2: #151b2f;
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --text: #f4f7fb;
+      --text-muted: #9ea7ba;
+      --text-faint: #6f7890;
+      --accent: #8b5cf6;
+      --accent-2: #4f8cff;
+      --accent-soft: rgba(139, 92, 246, 0.16);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius-card: 24px;
+      --radius-input: 18px;
+      --radius-pill: 999px;
+      --hero-text: #efe9ff;
+      --input-bg: #11172a;
+      --sidebar-bg: rgba(11, 16, 32, 0.88);
+      --eyebrow-text: #d8c9ff;
+      --bg-gradient: linear-gradient(180deg, #0b1020 0%, #0e1426 100%);
+        """
 
-st.markdown(f"""<style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Outfit:wght@300;400&display=swap');
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {{
-    {css_vars}
-}}
+    :root {{
+{vars}
+    }}
 
-/* Typography: Avoid span/div to protect Material Icons (like arrow_down) */
-html, body, .stApp, p, label, button, input, textarea, summary {{
-    font-family: 'Outfit', sans-serif !important;
-}}
-h1, h2, h3, h4, h5, h6 {{
-    font-family: 'Cormorant Garamond', serif !important;
-}}
+    html, body, [class*="css"]  {{
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+    }}
 
-/* Backgrounds */
-.stApp {{
-    background: var(--bg-main) !important;
-    color: var(--text-primary) !important;
-}}
-section[data-testid="stSidebar"] {{
-    background: var(--bg-sidebar) !important;
-    border-right: 1px solid var(--border-color) !important;
-}}
+    .stApp {{
+      background: var(--bg-gradient) !important;
+    }}
 
-/* Text Color Enforcement for Light/Dark Mode */
-p, h1, h2, h3, h4, h5, h6, label, summary, .stMarkdown p, .stCaption, .stRadio label {{
-    color: var(--text-primary) !important;
-}}
+    .block-container {{
+      max-width: 1320px;
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }}
 
-/* Muted Text */
-.muted-text {{
-    color: var(--text-muted) !important;
-    font-size: 16px !important;
-    font-weight: 300 !important;
-    letter-spacing: 0.05em !important;
-}}
+    h1, h2, h3 {{
+      font-family: 'Cormorant Garamond', serif !important;
+      letter-spacing: -0.02em;
+      line-height: 0.95;
+      color: var(--hero-text) !important;
+    }}
 
-/* Buttons */
-button[kind="primary"] {{
-    background: var(--btn-primary-bg) !important;
-    border: none !important;
-    border-radius: 14px !important;
-    color: #ffffff !important;
-    font-weight: 400 !important;
-    box-shadow: 0 4px 20px var(--btn-primary-shadow) !important;
-    transition: all 0.3s ease !important;
-}}
-button[kind="primary"]:hover {{
-    box-shadow: 0 6px 30px var(--btn-primary-shadow) !important;
-    transform: translateY(-1px);
-}}
-button[kind="secondary"], .stDownloadButton button {{
-    background: var(--btn-secondary-bg) !important;
-    border: 1px solid var(--btn-secondary-border) !important;
-    border-radius: 12px !important;
-    color: var(--text-primary) !important;
-    transition: all 0.25s ease !important;
-}}
-button[kind="secondary"]:hover, .stDownloadButton button:hover {{
-    background: var(--btn-secondary-hover-bg) !important;
-    border-color: var(--border-highlight) !important;
-}}
+    h1 {{
+      font-size: clamp(2.8rem, 5vw, 4.8rem) !important;
+      font-weight: 600 !important;
+      margin-bottom: 0.75rem !important;
+      max-width: 12ch;
+    }}
 
-/* Input areas */
-.stTextArea textarea, .stTextInput input, .stSelectbox > div > div {{
-    background: var(--bg-panel) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 14px !important;
-    color: var(--text-primary) !important;
-}}
-.stTextArea textarea:focus, .stTextInput input:focus, .stSelectbox > div > div:focus {{
-    border-color: var(--border-highlight) !important;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1) !important;
-}}
+    p, label, .stMarkdown, .stCaption {{
+      color: var(--text-muted);
+      font-size: 0.98rem;
+    }}
 
-/* Expanders & Code Blocks */
-[data-testid="stExpander"] details summary {{
-    background-color: var(--bg-panel) !important;
-    color: var(--text-primary) !important;
-}}
-[data-testid="stExpander"] details {{
-    background-color: var(--bg-panel) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 14px !important;
-}}
-[data-testid="stExpander"] details[open] summary {{
-    border-bottom: 1px solid var(--border-color) !important;
-}}
-[data-testid="stCodeBlock"] pre {{
-    background-color: var(--bg-sidebar) !important;
-}}
-[data-testid="stCodeBlock"] code {{
-    color: var(--text-primary) !important;
-    text-shadow: none !important;
-}}
+    section[data-testid="stSidebar"] {{
+      background: var(--sidebar-bg) !important;
+      border-right: 1px solid var(--panel-border);
+      backdrop-filter: blur(18px);
+    }}
 
-/* Panels */
-div[data-testid="stVerticalBlockBorderWrapper"] {{
-    background: var(--bg-panel) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 18px !important;
-}}
-.stImage img {{ border-radius: 14px; }}
-hr {{ border-color: var(--border-color) !important; }}
+    section[data-testid="stSidebar"] .block-container {{
+      padding-top: 1.5rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }}
 
-#MainMenu, footer {{ visibility: hidden; }}
-</style>""", unsafe_allow_html=True)
+    div[data-testid="stTextArea"],
+    div[data-testid="stSelectbox"],
+    div[data-testid="stNumberInput"],
+    div[data-testid="stSlider"],
+    div[data-testid="stRadio"],
+    div[data-testid="stExpander"] {{
+      background: var(--surface);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      padding: 0.35rem 0.5rem;
+    }}
+
+    textarea, input, .stTextInput input, [data-baseweb="textarea"], [data-baseweb="input"], [data-baseweb="select"] {{
+      background: var(--input-bg) !important;
+      color: var(--text) !important;
+      border-radius: var(--radius-input) !important;
+      border: 1px solid var(--panel-border) !important;
+    }}
+
+    [data-baseweb="select"] span, [data-baseweb="select"] div {{
+      color: var(--text) !important;
+    }}
+
+    textarea::placeholder, input::placeholder {{
+      color: var(--text-faint) !important;
+    }}
+
+    div[data-testid="stButton"] > button {{
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 0.9rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      box-shadow: 0 10px 30px rgba(79, 140, 255, 0.28);
+      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+    }}
+
+    div[data-testid="stButton"] > button:hover {{
+      transform: translateY(-1px);
+      box-shadow: 0 16px 40px rgba(79, 140, 255, 0.34);
+      opacity: 0.98;
+    }}
+
+    div[data-testid="stButton"] > button:focus {{
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+    }}
+
+    .stDownloadButton > button {{
+      border-radius: 999px !important;
+      background: rgba(255,255,255,0.05) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--panel-border) !important;
+    }}
+
+    img {{
+      border-radius: 28px !important;
+    }}
+
+    div[data-testid="stImage"] img {{
+      border: 1px solid var(--panel-border);
+      box-shadow: var(--shadow);
+    }}
+
+    div[data-testid="stExpander"] details {{
+      border: none !important;
+      background: transparent !important;
+    }}
+
+    div[data-testid="stExpander"] details summary {{
+      background: transparent !important;
+      color: var(--text) !important;
+    }}
+
+    div[data-testid="stRadio"] label,
+    div[data-testid="stCheckbox"] label {{
+      color: var(--text);
+    }}
+
+    hr {{
+      border-color: rgba(255,255,255,0.06);
+      margin: 1.5rem 0;
+    }}
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {{
+      background: var(--surface);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-card);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }}
+
+    .eyebrow {{
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--eyebrow-text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 1rem;
+    }}
+
+    .subcopy {{
+      max-width: 58ch;
+      color: var(--text-muted);
+      font-size: 1.02rem;
+      margin-bottom: 1.5rem;
+    }}
+    
+    #MainMenu, footer {{ visibility: hidden !important; }}
+    header {{ background: transparent !important; }}
+    .stDeployButton {{ display: none !important; }}
+    </style>
+    """, unsafe_allow_html=True)
+
+load_css(st.session_state.theme)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -247,17 +331,18 @@ with st.sidebar:
         label_visibility="collapsed",
     )
 
-    st.markdown("**Image Size**")
-    size_choice = st.selectbox(
-        label="size_selector",
-        options=list(SIZE_OPTIONS.keys()),
-        index=0,
-        label_visibility="collapsed"
-    )
-    width, height = SIZE_OPTIONS[size_choice]
+    with st.expander("Generation Settings", expanded=True):
+        st.markdown("**Image Size**")
+        size_choice = st.selectbox(
+            label="size_selector",
+            options=list(SIZE_OPTIONS.keys()),
+            index=0,
+            label_visibility="collapsed"
+        )
+        width, height = SIZE_OPTIONS[size_choice]
 
-    st.markdown("**Images to Generate**")
-    num_images = st.slider("num_images", min_value=1, max_value=4, value=1, label_visibility="collapsed")
+        st.markdown("**Batch Size**")
+        num_images = st.slider("num_images", min_value=1, max_value=4, value=1, label_visibility="collapsed")
 
     st.divider()
 
@@ -266,23 +351,6 @@ with st.sidebar:
     st.caption(f"Session: {hist_c} images  |  Quota: {gen_c}/{MAX_GENS_PER_SESSION} generations")
 
     st.divider()
-
-    st.markdown("**Storage Status**")
-    is_connected, db_count, last_ts = get_db_stats()
-    if is_connected:
-        st.markdown(f"🟢 **Supabase Connected**")
-        st.caption(f"Images in DB: **{db_count}**")
-        st.caption(f"Last saved: {last_ts}")
-    else:
-        st.markdown(f"🔴 **Supabase Offline**")
-        st.caption(f"Error: {last_ts}")
-    
-    st.divider()
-
-    if debug_mode := st.toggle("Developer Mode", value=True):
-        current_key = os.getenv("HF_API_KEY", "NOT_FOUND")
-        masked_key = current_key[:8] + "..." if current_key != "NOT_FOUND" else "NOT_FOUND"
-        st.info(f"Loaded Key: {masked_key}\n\nRouting: router.huggingface.co")
 
     if st.session_state.history:
         st.markdown("**Recent Prompts**")
@@ -297,59 +365,44 @@ with st.sidebar:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  HERO HEADER
-# ══════════════════════════════════════════════════════════════════════════════
-st.markdown("""
-<h1 style="font-size:52px; font-weight:600; letter-spacing:-0.02em;
-    background:var(--hero-gradient);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    background-clip:text; margin-bottom:4px;">
-    Create stunning images with a single prompt
-</h1>
-<p class="muted-text" style="margin-bottom:24px;">
-    Describe any scene, pick a style, and the model will paint it for you.
-</p>
-""", unsafe_allow_html=True)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
 #  MAIN LAYOUT
 # ══════════════════════════════════════════════════════════════════════════════
-left_col, right_col = st.columns([4, 6], gap="large")
+left_col, right_col = st.columns([0.95, 1.25], gap="large")
 
 with left_col:
-    with st.container(border=True):
-        st.markdown("**Describe your image**")
+    st.markdown("""
+    <div class="eyebrow">AI image studio</div>
+    <h1>Create cinematic images from a single prompt</h1>
+    <p class="subcopy">
+    Describe a scene, choose a visual language, and generate artwork that feels curated rather than random.
+    </p>
+    """, unsafe_allow_html=True)
 
+    with st.container(border=True):
         user_prompt: str = st.text_area(
             label="prompt",
-            placeholder="A serene mountain lake at sunset with perfect reflections...",
-            height=130,
+            placeholder="A foggy lighthouse on a black-rock coastline, dramatic clouds, cinematic light...",
+            height=180,
             key="prompt_input",
             label_visibility="collapsed",
         )
 
-        c1, c2 = st.columns([3, 1])
+        c1, c2 = st.columns([1, 0.32])
         with c1:
+            st.caption("Use vivid subjects, lighting, mood, and composition.")
             if user_prompt:
                 n = len(user_prompt)
                 if n > MAX_CHARS:
                     st.markdown(f":red[{n}/{MAX_CHARS} chars - too long!]")
-                else:
-                    st.caption(f"{n}/{MAX_CHARS} chars | {style}")
-            else:
-                st.caption("Type a prompt or click Random")
-
         with c2:
             def _set_random_prompt():
                 st.session_state.prompt_input = random.choice(RANDOM_PROMPTS)
             st.button("Random", use_container_width=True, on_click=_set_random_prompt)
 
-        with st.expander("Advanced: Negative Prompt"):
+        with st.expander("Advanced controls"):
             negative_prompt = st.text_input("What to exclude", placeholder="blur, text, watermark, bad anatomy...", label_visibility="collapsed")
-
-        if user_prompt.strip():
-            with st.expander("Preview final prompt"):
+            if user_prompt.strip():
+                st.caption("Preview final prompt:")
                 st.code(build_prompt(user_prompt.strip(), style), language=None)
 
     if len(user_prompt) > MAX_CHARS:
@@ -392,7 +445,6 @@ with right_col:
                     
                     try:
                         record = upload_image(image_bytes, user_prompt.strip(), style)
-                        st.success(f"Image saved to Supabase! [View URL]({record['image_url']})")
                     except Exception as e:
                         st.error(f"Supabase save failed: {e}")
                         record = {
@@ -413,13 +465,11 @@ with right_col:
                         st.session_state.history = st.session_state.history[-MAX_HISTORY:]
 
                 except ValueError as e:
-                    st.error("Image generation is currently unavailable. Please contact the admin.")
-                    if debug_mode: st.error(f"DEBUG: ValueError: {e}")
+                    st.error("Image generation is currently unavailable. Please try again later.")
                     st.stop()
                 except Exception as e:
                     logger.exception("Image generation failed")
                     st.error("Generation failed. Please try again in a moment.")
-                    if debug_mode: st.error(f"DEBUG ERROR TRACE:\n\n{type(e).__name__}: {str(e)}")
                     st.stop()
 
     # Display area
@@ -430,55 +480,56 @@ with right_col:
         else:
             display_items = [st.session_state.history[-1]]
             
-        if len(display_items) == 1:
-            latest = display_items[0]
-            st.image(latest.get("image", latest.get("image_url")), use_container_width=True)
-            m1, m2 = st.columns([3, 1])
-            with m1:
-                st.markdown(f"**[{latest['style']}]** {latest['prompt'][:80]}{'...' if len(latest['prompt']) > 80 else ''}")
-            with m2:
-                if "image" in latest:
-                    st.download_button(
-                        label="Download",
-                        data=latest["image"],
-                        file_name=f"flux_{latest['style'].lower().replace(' ', '_')}.png",
-                        mime="image/png",
-                        use_container_width=True,
-                    )
-                else:
-                    st.markdown(f"[Download Image]({latest.get('image_url')})")
-            with st.expander("Full generation details"):
-                st.text(f"Size: {latest.get('size', '1024x1024')}")
-                if latest.get('negative_prompt'):
-                    st.text(f"Negative: {latest['negative_prompt']}")
-                st.code(latest["final_prompt"], language=None)
-        else:
-            # Grid for multiple images
-            grid_cols = st.columns(2)
-            for idx, item in enumerate(display_items):
-                col = grid_cols[idx % 2]
-                with col:
-                    st.image(item.get("image", item.get("image_url")), use_container_width=True)
-                    if "image" in item:
+        with st.container(border=True):
+            if len(display_items) == 1:
+                latest = display_items[0]
+                st.image(latest.get("image", latest.get("image_url")), use_container_width=True)
+                m1, m2 = st.columns([3, 1])
+                with m1:
+                    st.markdown(f"**[{latest['style']}]** {latest['prompt'][:80]}{'...' if len(latest['prompt']) > 80 else ''}")
+                with m2:
+                    if "image" in latest:
                         st.download_button(
                             label="Download",
-                            data=item["image"],
-                            file_name=f"flux_batch_{idx}_{item['style'].lower().replace(' ', '_')}.png",
+                            data=latest["image"],
+                            file_name=f"flux_{latest['style'].lower().replace(' ', '_')}.png",
                             mime="image/png",
-                            key=f"dl_batch_{idx}_{time.time()}",
                             use_container_width=True,
                         )
                     else:
-                        st.markdown(f"[Download Image]({item.get('image_url')})")
+                        st.markdown(f"[Download Image]({latest.get('image_url')})")
+                with st.expander("Full generation details"):
+                    st.text(f"Size: {latest.get('size', '1024x1024')}")
+                    if latest.get('negative_prompt'):
+                        st.text(f"Negative: {latest['negative_prompt']}")
+                    st.code(latest["final_prompt"], language=None)
+            else:
+                # Grid for multiple images
+                grid_cols = st.columns(2)
+                for idx, item in enumerate(display_items):
+                    col = grid_cols[idx % 2]
+                    with col:
+                        st.image(item.get("image", item.get("image_url")), use_container_width=True)
+                        if "image" in item:
+                            st.download_button(
+                                label="Download",
+                                data=item["image"],
+                                file_name=f"flux_batch_{idx}_{item['style'].lower().replace(' ', '_')}.png",
+                                mime="image/png",
+                                key=f"dl_batch_{idx}_{time.time()}",
+                                use_container_width=True,
+                            )
+                        else:
+                            st.markdown(f"[Download Image]({item.get('image_url')})")
     else:
-        st.markdown("""
-        <div style="display:flex; flex-direction:column; align-items:center;
-            justify-content:center; min-height:400px; border:2px dashed var(--border-color);
-            border-radius:20px; color:var(--text-muted);">
-            <span style="margin-top:12px; font-size:16px;">Your image will appear here</span>
-            <span style="font-size:14px; opacity:0.8;">Type a prompt and click Generate</span>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown("""
+            <div style="display:flex; flex-direction:column; align-items:center;
+                justify-content:center; min-height:400px; color:var(--text-muted);">
+                <span style="margin-top:12px; font-size:16px;">Your image will appear here</span>
+                <span style="font-size:14px; opacity:0.8;">Type a prompt and click Generate</span>
+            </div>
+            """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
