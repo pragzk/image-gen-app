@@ -1,20 +1,12 @@
-"""
-storage.py — Supabase persistence layer for saving and loading images.
-"""
 import os
 import uuid
-import logging
-
-logger = logging.getLogger(__name__)
 
 try:
-    from supabase import create_client, Client
+    from supabase import create_client
 except ImportError:
-    logger.error("supabase package not installed")
-    Client = None
+    print("supabase is not installed")
 
-def get_supabase_client():
-    """Initializes and returns the Supabase client."""
+def get_client():
     try:
         from dotenv import load_dotenv
         load_dotenv(override=True)
@@ -23,124 +15,108 @@ def get_supabase_client():
         
     url = os.getenv("SUPABASE_URL")
     key = os.getenv("SUPABASE_KEY")
+    
     if not url or not key:
-        print("DEBUG: SUPABASE_URL or SUPABASE_KEY missing from .env")
+        print("supabase url or key is missing")
         return None
+        
     try:
         return create_client(url, key)
     except Exception as e:
-        print(f"DEBUG: Failed to initialize Supabase client: {e}")
+        print(f"couldnt connect to supabase: {e}")
         return None
 
-def upload_image(image_bytes: bytes, prompt: str, style: str) -> dict:
-    """
-    Uploads the image to 'generated-images' bucket and saves metadata to 'image_history' table.
-    Returns the inserted record or raises an exception on failure.
-    """
-    client = get_supabase_client()
+def upload_image(img, prompt, style):
+    client = get_client()
     if not client:
-        raise ValueError("Supabase client not initialized (missing URL/KEY)")
+        raise ValueError("no supabase client")
 
-    # Generate a unique filename for the storage bucket
+    # make a random filename so they dont overwrite each other
     filename = f"{uuid.uuid4()}.png"
 
-    # 1. Upload to Supabase Storage Bucket
-    print(f"DEBUG: Uploading {filename} to 'generated-images' bucket...")
+    print("uploading to the bucket...")
     try:
-        upload_res = client.storage.from_("generated-images").upload(
-            file=image_bytes,
+        client.storage.from_("generated-images").upload(
+            file=img,
             path=filename,
             file_options={"content-type": "image/png"}
         )
-        print(f"DEBUG: Upload successful.")
     except Exception as e:
-        print(f"DEBUG: Upload failed: {e}")
-        raise RuntimeError(f"Failed to upload image to bucket: {e}")
+        print(f"upload failed: {e}")
+        raise RuntimeError(f"upload error: {e}")
 
-    # 2. Get Public URL
     try:
         public_url = client.storage.from_("generated-images").get_public_url(filename)
-        print(f"DEBUG: Public URL generated: {public_url}")
     except Exception as e:
-        print(f"DEBUG: Failed to get public URL: {e}")
-        raise RuntimeError(f"Failed to get public URL: {e}")
+        print(f"couldnt get url: {e}")
+        raise RuntimeError(f"url error: {e}")
 
-    # 3. Insert metadata into Postgres Database
-    print(f"DEBUG: Inserting metadata into 'image_history' table...")
+    print("saving details to database...")
     record = {
         "filename": filename,
         "prompt": prompt,
         "style": style
     }
+    
     try:
-        db_res = client.table("image_history").insert(record).execute()
-        print(f"DEBUG: Database insert successful.")
+        res = client.table("image_history").insert(record).execute()
         
-        # Attach the public URL to the returned record for the UI to use
-        final_record = db_res.data[0] if db_res.data else record
-        final_record["image_url"] = public_url
-        final_record["image"] = image_bytes # Keep the bytes for instant download capability
-        return final_record
+        # add the url and raw image bytes so we can use them right away
+        final = res.data[0] if res.data else record
+        final["image_url"] = public_url
+        final["image"] = img
+        return final
+        
     except Exception as e:
-        print(f"DEBUG: Database insert failed: {e}")
-        raise RuntimeError(f"Failed to insert metadata into database: {e}")
+        print(f"db insert failed: {e}")
+        raise RuntimeError(f"db error: {e}")
 
 def fetch_gallery():
-    """
-    Fetches the latest images from the image_history table.
-    """
-    client = get_supabase_client()
+    client = get_client()
     if not client:
-        print("DEBUG: fetch_gallery aborted, no client.")
         return []
         
     try:
-        print("DEBUG: Fetching gallery from Supabase...")
+        print("grabbing gallery stuff...")
         res = client.table("image_history").select("*").order("created_at", desc=True).limit(20).execute()
         
-        records = []
+        images = []
         for row in res.data:
-            # Reconstruct the public URL dynamically based on the stored filename
-            public_url = client.storage.from_("generated-images").get_public_url(row["filename"])
+            url = client.storage.from_("generated-images").get_public_url(row["filename"])
             
-            # Map the database row back to our UI's expected dictionary format
-            record = {
+            images.append({
                 "prompt": row["prompt"],
                 "style": row["style"],
-                "image_url": public_url,
+                "image_url": url,
                 "filename": row["filename"],
-                "final_prompt": row["prompt"], # We didn't save final_prompt in DB per schema, so use prompt
+                "final_prompt": row["prompt"],
                 "negative_prompt": "",
                 "created_at": row.get("created_at", "")
-            }
-            records.append(record)
+            })
             
-        print(f"DEBUG: Fetched {len(records)} records.")
-        return records
+        return images
+        
     except Exception as e:
-        print(f"DEBUG: Failed to fetch gallery: {e}")
-        raise RuntimeError(f"Failed to fetch gallery: {e}")
+        print(f"failed to fetch gallery: {e}")
+        raise RuntimeError(f"gallery error: {e}")
 
 def get_db_stats():
-    """Returns (is_connected: bool, image_count: int, last_timestamp: str)"""
-    client = get_supabase_client()
+    client = get_client()
     if not client:
-        return False, 0, "No valid Supabase keys"
+        return False, 0, "no keys"
         
     try:
-        # Check connection and get row count
         res = client.table("image_history").select("id", count="exact").execute()
         count = res.count if res.count is not None else len(res.data)
         
-        # Get latest timestamp
         latest = client.table("image_history").select("created_at").order("created_at", desc=True).limit(1).execute()
-        timestamp = latest.data[0]["created_at"] if latest.data else "No images yet"
+        time = latest.data[0]["created_at"] if latest.data else "none yet"
         
-        # Clean up timestamp format a bit if possible
-        if "T" in timestamp:
-            timestamp = timestamp.split("T")[0] + " " + timestamp.split("T")[1][:8]
+        if "T" in time:
+            time = time.split("T")[0] + " " + time.split("T")[1][:8]
             
-        return True, count, timestamp
+        return True, count, time
+        
     except Exception as e:
-        print(f"DEBUG: DB stats failed: {e}")
+        print(f"stats failed: {e}")
         return False, 0, str(e)

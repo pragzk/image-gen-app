@@ -1,11 +1,3 @@
-"""
-app.py — Streamlit front-end for the AI Image Generator.
-
-Complete upgrade pass: No emojis, typography upgrade, multiple image generation,
-size selection, negative prompt, and responsive grid layout.
-"""
-
-import logging
 import random
 import time
 import os
@@ -19,22 +11,21 @@ from api import generate_image
 from prompts import STYLE_KEYWORDS, build_prompt
 from storage import upload_image, fetch_gallery, get_db_stats
 
-# ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="AI Image Generator",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Session-state defaults ────────────────────────────────────────────────────
+# setup session state
 if "history" not in st.session_state:
     try:
         st.session_state.history = fetch_gallery()
-        # Since we fetch descending (newest first) from DB, reverse to match append order
         st.session_state.history.reverse()
     except Exception as e:
-        st.error(f"Failed to load database history: {e}")
+        print(f"couldnt load history: {e}")
         st.session_state.history = []
+        
 if "prompt_input" not in st.session_state:
     st.session_state.prompt_input = ""
 if "last_gen_time" not in st.session_state:
@@ -44,9 +35,6 @@ if "gen_count" not in st.session_state:
 if "theme" not in st.session_state:
     st.session_state.theme = "Dark"
 
-logger = logging.getLogger(__name__)
-
-# ── Constants ─────────────────────────────────────────────────────────────────
 RANDOM_PROMPTS = [
     "A lone astronaut standing on an alien planet with twin moons rising",
     "A cozy candlelit coffee shop on a rainy cobblestone street at night",
@@ -75,10 +63,6 @@ MAX_CHARS = 500
 RATE_LIMIT_SECONDS = 15
 MAX_GENS_PER_SESSION = 50
 MAX_HISTORY = 20
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  THEMING & CSS
-# ══════════════════════════════════════════════════════════════════════════════
 
 def load_css(theme):
     if theme == "Light":
@@ -234,8 +218,7 @@ def load_css(theme):
       color: var(--text) !important;
     }}
 
-    .stRadio div[role="radiogroup"] label > div:first-child,
-    label[data-baseweb="radio"] > div:first-child {{
+    .stRadio div[role="radiogroup"] label > div:first-child {{
       background-color: transparent !important;
     }}
 
@@ -338,10 +321,6 @@ def load_css(theme):
 
 load_css(st.session_state.theme)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  SIDEBAR
-# ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("<h2 style='margin-bottom:0;'>Image Studio</h2>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:14px; color:var(--text-muted);'>Powered by FLUX.1-schnell</p>", unsafe_allow_html=True)
@@ -386,7 +365,7 @@ with st.sidebar:
 
     if st.session_state.history:
         st.markdown("**Recent Prompts**")
-        for i, item in enumerate(reversed(st.session_state.history[-5:])): # show only last 5 in sidebar
+        for i, item in enumerate(reversed(st.session_state.history[-5:])):
             short = item["prompt"][:40] + "..." if len(item["prompt"]) > 40 else item["prompt"]
             st.caption(f"[{item['style']}] {short}")
         if st.button("Clear history", use_container_width=True):
@@ -396,9 +375,6 @@ with st.sidebar:
         st.caption("Generate your first image to start.")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  MAIN LAYOUT
-# ══════════════════════════════════════════════════════════════════════════════
 left_col, right_col = st.columns([0.95, 1.25], gap="large")
 
 with left_col:
@@ -411,7 +387,7 @@ with left_col:
     """, unsafe_allow_html=True)
 
     with st.container(border=True):
-        user_prompt: str = st.text_area(
+        text = st.text_area(
             label="prompt",
             placeholder="A foggy lighthouse on a black-rock coastline, dramatic clouds, cinematic light...",
             height=180,
@@ -422,23 +398,23 @@ with left_col:
         c1, c2 = st.columns([1, 0.32])
         with c1:
             st.caption("Use vivid subjects, lighting, mood, and composition.")
-            if user_prompt:
-                n = len(user_prompt)
+            if text:
+                n = len(text)
                 if n > MAX_CHARS:
                     st.markdown(f":red[{n}/{MAX_CHARS} chars - too long!]")
         with c2:
-            def _set_random_prompt():
+            def random_prompt():
                 st.session_state.prompt_input = random.choice(RANDOM_PROMPTS)
-            st.button("Random", use_container_width=True, on_click=_set_random_prompt)
+            st.button("Random", use_container_width=True, on_click=random_prompt)
 
         with st.expander("Advanced controls"):
             negative_prompt = st.text_input("What to exclude", placeholder="blur, text, watermark, bad anatomy...", label_visibility="collapsed")
-            if user_prompt.strip():
+            if text.strip():
                 st.caption("Preview final prompt:")
-                st.code(build_prompt(user_prompt.strip(), style), language=None)
+                st.code(build_prompt(text.strip(), style), language=None)
 
-    if len(user_prompt) > MAX_CHARS:
-        st.warning(f"Prompt too long ({len(user_prompt)}/{MAX_CHARS} chars). Please shorten it.")
+    if len(text) > MAX_CHARS:
+        st.warning(f"Prompt too long ({len(text)}/{MAX_CHARS} chars). Please shorten it.")
         st.stop()
     if style not in STYLES:
         st.error("Invalid style selected.")
@@ -448,12 +424,12 @@ with left_col:
         "Generate Image" if num_images == 1 else f"Generate {num_images} Images",
         type="primary",
         use_container_width=True,
-        disabled=not user_prompt.strip(),
+        disabled=not text.strip(),
     )
 
 
 with right_col:
-    if generate_clicked and user_prompt.strip():
+    if generate_clicked and text.strip():
         elapsed = time.time() - st.session_state.last_gen_time
         if elapsed < RATE_LIMIT_SECONDS:
             remaining = int(RATE_LIMIT_SECONDS - elapsed)
@@ -464,29 +440,27 @@ with right_col:
             st.error("Session limit reached. Refresh to start a new session.")
             st.stop()
 
-        final_prompt = build_prompt(user_prompt.strip(), style)
-        
+        prompt = build_prompt(text.strip(), style)
         current_batch_images = []
         st.session_state.last_gen_time = time.time()
 
         for i in range(num_images):
             with st.spinner(f"Creating image {i+1} of {num_images}..."):
                 try:
-                    image_bytes = generate_image(final_prompt, width, height, negative_prompt)
+                    img = generate_image(prompt, width, height, negative_prompt)
                     st.session_state.gen_count += 1
                     
                     try:
-                        record = upload_image(image_bytes, user_prompt.strip(), style)
+                        record = upload_image(img, text.strip(), style)
                     except Exception as e:
                         st.error(f"Supabase save failed: {e}")
                         record = {
-                            "prompt": user_prompt.strip(),
+                            "prompt": text.strip(),
                             "style": style,
-                            "image": image_bytes,
+                            "image": img,
                         }
                     
-                    # Fill in UI-specific missing keys
-                    record["final_prompt"] = final_prompt
+                    record["final_prompt"] = prompt
                     record["negative_prompt"] = negative_prompt
                     record["size"] = f"{width}x{height}"
                     
@@ -496,18 +470,16 @@ with right_col:
                     if len(st.session_state.history) > MAX_HISTORY:
                         st.session_state.history = st.session_state.history[-MAX_HISTORY:]
 
-                except ValueError as e:
+                except ValueError:
                     st.error("Image generation is currently unavailable. Please try again later.")
                     st.stop()
                 except Exception as e:
-                    logger.exception("Image generation failed")
+                    print(f"generation failed: {e}")
                     st.error("Generation failed. Please try again in a moment.")
                     st.stop()
 
-    # Display area
     if st.session_state.history:
-        # Check if we just generated a batch
-        if generate_clicked and user_prompt.strip() and num_images > 1:
+        if generate_clicked and text.strip() and num_images > 1:
             display_items = current_batch_images
         else:
             display_items = [st.session_state.history[-1]]
@@ -516,6 +488,7 @@ with right_col:
             if len(display_items) == 1:
                 latest = display_items[0]
                 st.image(latest.get("image", latest.get("image_url")), use_container_width=True)
+                
                 m1, m2 = st.columns([3, 1])
                 with m1:
                     st.markdown(f"**[{latest['style']}]** {latest['prompt'][:80]}{'...' if len(latest['prompt']) > 80 else ''}")
@@ -530,13 +503,13 @@ with right_col:
                         )
                     else:
                         st.markdown(f"[Download Image]({latest.get('image_url')})")
+                        
                 with st.expander("Full generation details"):
                     st.text(f"Size: {latest.get('size', '1024x1024')}")
                     if latest.get('negative_prompt'):
                         st.text(f"Negative: {latest['negative_prompt']}")
                     st.code(latest["final_prompt"], language=None)
             else:
-                # Grid for multiple images
                 grid_cols = st.columns(2)
                 for idx, item in enumerate(display_items):
                     col = grid_cols[idx % 2]
@@ -564,19 +537,15 @@ with right_col:
             """, unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  GALLERY
-# ══════════════════════════════════════════════════════════════════════════════
 if len(st.session_state.history) >= 2:
     st.divider()
     count = len(st.session_state.history)
     st.markdown(f"<h3>Session Gallery ({count} images)</h3>", unsafe_allow_html=True)
 
-    COLS = 3
-    cols = st.columns(COLS, gap="medium")
+    cols = st.columns(3, gap="medium")
 
     for idx, item in enumerate(reversed(st.session_state.history)):
-        col = cols[idx % COLS]
+        col = cols[idx % 3]
         short = item["prompt"][:55] + "..." if len(item["prompt"]) > 55 else item["prompt"]
 
         with col:
