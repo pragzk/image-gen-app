@@ -38,6 +38,17 @@ STYLE_KEYWORDS: dict[str, str] = {
     ),
 }
 
+import re
+
+
+def _sanitize_prompt(text: str) -> str:
+    """Strip control characters and collapse whitespace."""
+    # Remove non-printable / control characters (keep standard unicode)
+    text = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', text)
+    # Collapse whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
 
 def build_prompt(user_prompt: str, style: str) -> str:
     """
@@ -50,8 +61,11 @@ def build_prompt(user_prompt: str, style: str) -> str:
     Returns:
         A single enriched prompt string ready to send to the model.
     """
-    user_prompt = user_prompt.strip()
+    user_prompt = _sanitize_prompt(user_prompt)
     keywords = STYLE_KEYWORDS.get(style, "")
+
+    if not user_prompt:
+        return ""
 
     if not keywords:
         return user_prompt
