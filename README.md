@@ -1,50 +1,28 @@
 # 🎨 AI Image Generator
 
-A Streamlit web app that turns text descriptions into images using
-**[FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell)**
-via the Hugging Face Inference API.
+A Streamlit web app that turns text descriptions into images using **[FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell)** via the Hugging Face Inference API, and persistently saves them to a Supabase PostgreSQL database and Storage bucket.
 
 ---
 
-## What It Does
+## What the project does
 
-| Feature | Details |
-|---|---|
-| **Style conditioning** | Realistic, Anime, Cyberpunk, Watercolor, Pixel Art, Fantasy |
-| **Prompt builder** | `prompts.py` appends style-specific quality keywords to your input |
-| **Random prompts** | 🎲 button fills the text area with an inspiration prompt |
-| **Download** | Download any generated image as a PNG file |
-| **Session gallery** | Grid of all images generated in the current session |
-| **History sidebar** | Compact list of every prompt you've run |
+- **Generates Images**: Uses the FLUX.1-schnell model to create stunning images from text prompts.
+- **Style Conditioning**: Automatically enhances prompts with curated keywords for styles like Realistic, Anime, Cyberpunk, Watercolor, Pixel Art, and Fantasy.
+- **Batch Generation**: Generate up to 4 images at a time.
+- **Persistent Gallery**: Uploads generated images to Supabase Storage and saves metadata in a PostgreSQL database, so your gallery persists across sessions.
+- **Dark/Light Themes**: A beautifully polished, cinematic custom UI with a toggleable theme.
 
 ---
 
-## Project Structure
-
-```
-image-gen-app/
-├── app.py            # Streamlit UI — layout, widgets, session state
-├── api.py            # Hugging Face InferenceClient wrapper
-├── prompts.py        # build_prompt(user_prompt, style) → enriched prompt
-├── .env              # Local API key — never committed to git
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
-
----
-
-## How to Run Locally
+## How to run it locally
 
 ### 1 — Clone the repo
-
 ```bash
-git clone https://github.com/your-username/image-gen-app.git
+git clone https://github.com/pragzk/image-gen-app.git
 cd image-gen-app
 ```
 
 ### 2 — Create a virtual environment
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate      # macOS / Linux
@@ -52,89 +30,48 @@ source .venv/bin/activate      # macOS / Linux
 ```
 
 ### 3 — Install dependencies
-
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4 — Add your API key (see section below)
-
-### 5 — Launch the app
-
+### 4 — Launch the app
 ```bash
 streamlit run app.py
 ```
 
-The app opens at `http://localhost:8501`.
+---
+
+## How to add your API key
+
+You will need three keys for this project to work fully:
+1. **Hugging Face Token**: Go to <https://huggingface.co/settings/tokens> and create a **Read** token.
+2. **Supabase URL & Key**: Create a Supabase project, go to Project Settings -> API, and get the Project URL and the `anon` `public` API key.
+
+Create a `.env` file in the project root and add your keys:
+```
+HF_API_KEY=hf_your_actual_token_here
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your_supabase_anon_key
+```
+*(The `.env` file is in `.gitignore` and won't be committed to version control.)*
 
 ---
 
-## How to Add Your API Key
+## How to deploy it
 
-### Local development
-
-1. Go to <https://huggingface.co/settings/tokens> and create a **Read** token.
-2. Open (or create) the `.env` file in the project root:
-
-   ```
-   HF_API_KEY=hf_your_actual_token_here
-   ```
-
-3. `.env` is listed in `.gitignore` — it will **not** be committed.
-
-### Streamlit Community Cloud (production)
-
-1. In your app's dashboard, go to **Settings → Secrets**.
-2. Add:
-
-   ```toml
-   HF_API_KEY = "hf_your_actual_token_here"
-   ```
-
-3. Save and reboot the app.
-
-`api.py` automatically checks `st.secrets` first, then falls back to
-the environment variable, so the same code works in both environments.
-
----
-
-## How to Deploy on Streamlit Community Cloud
-
-1. Push the project to a **public** GitHub repository
-   (the `.env` file is excluded by `.gitignore`, so secrets stay safe).
-
+1. Push the project to your GitHub repository.
 2. Go to <https://share.streamlit.io> and sign in with GitHub.
-
 3. Click **New app**, select your repo and set the main file to `app.py`.
-
-4. Before deploying, open **Advanced settings → Secrets** and paste:
-
+4. Open **Advanced settings → Secrets** and paste your keys in TOML format:
    ```toml
    HF_API_KEY = "hf_your_actual_token_here"
+   SUPABASE_URL = "https://your-project-id.supabase.co"
+   SUPABASE_KEY = "your_supabase_anon_key"
    ```
-
-5. Click **Deploy** — Streamlit installs `requirements.txt` automatically.
-
-Your app will be live at `https://<your-app-name>.streamlit.app`.
+5. Click **Deploy**. Streamlit Cloud will automatically install the requirements and launch your app.
 
 ---
 
-## Known Limitation
+## One known limitation
 
-**No persistent image storage between sessions.**  
-Generated images are held in `st.session_state`, which lives only for
-the duration of a single browser session. Refreshing the page clears the
-gallery. To persist images across sessions you would need to add a
-database or object-storage backend (e.g. Supabase Storage, AWS S3).
-
----
-
-## Tech Stack
-
-| Layer | Library |
-|---|---|
-| UI | [Streamlit](https://streamlit.io) |
-| Inference | [huggingface-hub `InferenceClient`](https://huggingface.co/docs/huggingface_hub/package_reference/inference_client) |
-| Model | [black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell) |
-| Secrets | [python-dotenv](https://github.com/theskumar/python-dotenv) |
-| Images | [Pillow](https://pillow.readthedocs.io) |
+**Sequential Batch Generation and Rate Limits**: When generating multiple images at once (Batch Size > 1), the app makes sequential API calls to Hugging Face rather than asynchronous parallel requests. Because it relies on the free Hugging Face Inference API, generating too many images back-to-back can cause the generation process to take a long time, and you might occasionally hit rate-limit errors or experience temporary unavailability during high network traffic.
